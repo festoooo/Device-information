@@ -1,71 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Info Logger</title>
-  <!-- Firebase App and Firestore -->
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Info</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>Welcome!</h1>
-  <p>Your device information is being collected for analysis. Thank you!</p>
+    <h1>Welcome!</h1>
+    <p>Your device information is being collected for analysis. Thank you!</p>
 
-  <script>
-    // Your Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
-      authDomain: "device-info-d07e2.firebaseapp.com",
-      projectId: "device-info-d07e2",
-      storageBucket: "device-info-d07e2.firebasestorage.app",
-      messagingSenderId: "554200654244",
-      appId: "1:554200654244:web:3a186125b1196828772131",
-      measurementId: "G-XH1WS92TKD"
-    };
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
+            authDomain: "device-info-d07e2.firebaseapp.com",
+            projectId: "device-info-d07e2",
+            storageBucket: "device-info-d07e2.appspot.com",
+            messagingSenderId: "554200654244",
+            appId: "1:554200654244:web:3a186125b1196828772131",
+            measurementId: "G-XH1WS92TKD"
+        };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore(app);
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    // Capture device information
-    const deviceInfo = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      screenResolution: `${window.screen.width}x${window.screen.height}`,
-      colorDepth: window.screen.colorDepth,
-      timestamp: new Date().toISOString()
-    };
+        // Function to capture device information
+        function getDeviceInfo() {
+            const deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenResolution: `${window.screen.width}x${window.screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                dateTime: new Date().toISOString()
+            };
+            return deviceInfo;
+        }
 
-    // Log the captured data to console
-    console.log("Captured Device Information:", deviceInfo);
+        // Send device information to Firestore
+        async function saveDeviceInfo() {
+            try {
+                const deviceInfo = getDeviceInfo();
+                await db.collection("deviceInfo").add(deviceInfo);
+                console.log("Device information saved successfully:", deviceInfo);
+            } catch (error) {
+                console.error("Error saving device information:", error);
+            }
+        }
 
-    // Write device information to Firestore
-    db.collection("device-info").add(deviceInfo)
-      .then((docRef) => {
-        console.log("Device information successfully written with ID:", docRef.id);
-      })
-      .catch((error) => {
-        console.error("Error writing device information:", error);
-      });
-
-    // Debugging Firestore Initialization
-    try {
-      console.log("Firestore Initialized:", app.name);
-    } catch (error) {
-      console.error("Error initializing Firestore:", error);
-    }
-
-    // Debugging helper for all uncaught errors
-    window.addEventListener('error', (event) => {
-      console.error("Uncaught Error:", event.error);
-    });
-
-    // Debugging helper for all unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error("Unhandled Promise Rejection:", event.reason);
-    });
-  </script>
+        // Capture and save device info
+        saveDeviceInfo();
+    </script>
 </body>
 </html>
