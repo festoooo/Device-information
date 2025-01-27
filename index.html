@@ -3,47 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Info Collector</title>
-  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <title>Device Info Collection</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
 </head>
 <body>
   <h1>Welcome!</h1>
   <p>Your device information is being collected for analysis. Thank you!</p>
 
   <script>
-    // Load FingerprintJS
-    FingerprintJS.load().then(fp => {
-      fp.get().then(result => {
-        // Collect device data
-        const deviceData = {
-          visitorId: result.visitorId,
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          screen: {
-            width: screen.width,
-            height: screen.height,
-            pixelDepth: screen.pixelDepth,
-          },
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language: navigator.language,
-          colorDepth: screen.colorDepth,
-        };
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
+      authDomain: "device-info-d07e2.firebaseapp.com",
+      projectId: "device-info-d07e2",
+      storageBucket: "device-info-d07e2.firebasestorage.app",
+      messagingSenderId: "554200654244",
+      appId: "1:554200654244:web:3a186125b1196828772131",
+      measurementId: "G-XH1WS92TKD"
+    };
 
-        console.log(deviceData); // Logs to the browser console
+    // Initialize Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-        // Send data to your backend (optional)
-        fetch('https://your-backend-server.com/collect-device-data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(deviceData),
-        })
-          .then(response => response.json())
-          .then(data => console.log('Data sent to server:', data))
-          .catch(error => console.error('Error sending data:', error));
-      });
-    });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Function to collect device info
+    async function collectDeviceInfo() {
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        // Add device info to Firestore
+        const docRef = await addDoc(collection(db, "deviceInfo"), deviceInfo);
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    }
+
+    // Call the function on page load
+    collectDeviceInfo();
   </script>
 </body>
 </html>
