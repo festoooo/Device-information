@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Info Collection</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
+  <title>Device Info Logger</title>
+  <!-- Firebase App and Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
 </head>
 <body>
   <h1>Welcome!</h1>
@@ -24,33 +25,47 @@
     };
 
     // Initialize Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Capture device information
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      screenResolution: `${window.screen.width}x${window.screen.height}`,
+      colorDepth: window.screen.colorDepth,
+      timestamp: new Date().toISOString()
+    };
 
-    // Function to collect device info
-    async function collectDeviceInfo() {
-      const deviceInfo = {
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        platform: navigator.platform,
-        screenResolution: `${window.screen.width}x${window.screen.height}`,
-        timestamp: new Date().toISOString()
-      };
+    // Log the captured data to console
+    console.log("Captured Device Information:", deviceInfo);
 
-      try {
-        // Add device info to Firestore
-        const docRef = await addDoc(collection(db, "deviceInfo"), deviceInfo);
-        console.log("Document written with ID: ", docRef.id);
-      } catch (e) {
-        console.error("Error adding document: ", e);
-      }
+    // Write device information to Firestore
+    db.collection("device-info").add(deviceInfo)
+      .then((docRef) => {
+        console.log("Device information successfully written with ID:", docRef.id);
+      })
+      .catch((error) => {
+        console.error("Error writing device information:", error);
+      });
+
+    // Debugging Firestore Initialization
+    try {
+      console.log("Firestore Initialized:", app.name);
+    } catch (error) {
+      console.error("Error initializing Firestore:", error);
     }
 
-    // Call the function on page load
-    collectDeviceInfo();
+    // Debugging helper for all uncaught errors
+    window.addEventListener('error', (event) => {
+      console.error("Uncaught Error:", event.error);
+    });
+
+    // Debugging helper for all unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error("Unhandled Promise Rejection:", event.reason);
+    });
   </script>
 </body>
 </html>
