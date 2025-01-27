@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Info Collector</title>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+</head>
+<body>
+  <h1>Welcome!</h1>
+  <p>Your device information is being collected for analysis. Thank you!</p>
+
+  <script>
+    // Load FingerprintJS
+    FingerprintJS.load().then(fp => {
+      fp.get().then(result => {
+        // Collect device data
+        const deviceData = {
+          visitorId: result.visitorId,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          screen: {
+            width: screen.width,
+            height: screen.height,
+            pixelDepth: screen.pixelDepth,
+          },
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          colorDepth: screen.colorDepth,
+        };
+
+        console.log(deviceData); // Logs to the browser console
+
+        // Send data to your backend (optional)
+        fetch('https://your-backend-server.com/collect-device-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(deviceData),
+        })
+          .then(response => response.json())
+          .then(data => console.log('Data sent to server:', data))
+          .catch(error => console.error('Error sending data:', error));
+      });
+    });
+  </script>
+</body>
+</html>
