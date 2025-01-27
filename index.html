@@ -3,16 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Information Logger</title>
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
+  <title>Device Information Collector</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .log {
+      margin-top: 20px;
+      color: red;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
   <h1>Welcome!</h1>
   <p>Your device information is being collected for analysis. Thank you!</p>
 
+  <div class="log" id="log"></div>
+
   <script>
-    // Firebase Configuration
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
       authDomain: "device-info-d07e2.firebaseapp.com",
@@ -24,51 +39,38 @@
     };
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Function to collect device information
-    async function getDeviceInfo() {
-      const battery = navigator.getBattery ? await navigator.getBattery() : null;
-      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    // Collect device information
+   const data = {
+  language: navigator.language,
+  platform: navigator.platform,
+  screen: {
+    width: screen.width,
+    height: screen.height,
+    colorDepth: screen.colorDepth,
+  },
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  userAgent: navigator.userAgent,
+  timestamp: new Date().toISOString(),
+  battery: navigator.getBattery ? await navigator.getBattery() : null,
+  };
 
-      return {
-        language: navigator.language,
-        platform: navigator.platform,
-        screen: {
-          width: screen.width,
-          height: screen.height,
-          colorDepth: screen.colorDepth,
-        },
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-        battery: battery
-          ? {
-              level: battery.level * 100 + "%",
-              charging: battery.charging,
-            }
-          : "Battery info not available",
-        connection: connection
-          ? {
-              type: connection.effectiveType || "unknown",
-              downlink: connection.downlink || "unknown Mbps",
-            }
-          : "Connection info not available",
-      };
-    }
-
-    // Automatically collect and save device information
-    (async () => {
-      const deviceInfo = await getDeviceInfo();
-
-      try {
-        await db.collection("deviceInfo").add(deviceInfo);
-        console.log("Device information saved successfully:", deviceInfo);
-      } catch (error) {
+    // Save device info to Firestore
+    db.collection("deviceInfo")
+      .add(deviceInfo)
+      .then(() => {
+        document.getElementById("log").innerText = "Device information saved successfully!";
+      })
+      .catch((error) => {
         console.error("Error saving device information:", error);
-      }
-    })();
+        document.getElementById("log").innerText =
+          "Error saving device information: " + error.message;
+      });
+
+    // Log collected device info for debugging
+    console.log("Collected Device Info:", deviceInfo);
   </script>
 </body>
 </html>
