@@ -1,73 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera Test</title>
+    <title>Camera Photo Capture</title>
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
+            authDomain: "device-info-d07e2.firebaseapp.com",
+            projectId: "device-info-d07e2",
+            storageBucket: "device-info-d07e2.appspot.com",
+            messagingSenderId: "554200654244",
+            appId: "1:554200654244:web:3a186125b1196828772131",
+            measurementId: "G-XH1WS92TKD"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // Function to handle photo capture
+        async function capturePhoto() {
+            try {
+                // Request camera access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoElement = document.querySelector("#videoPreview");
+                videoElement.srcObject = stream;
+
+                // Show the preview
+                document.querySelector("#cameraContainer").style.display = "block";
+
+                // Capture photo on button click
+                document.querySelector("#captureButton").onclick = async () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    const context = canvas.getContext("2d");
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+                    // Stop the video stream
+                    stream.getTracks().forEach((track) => track.stop());
+
+                    // Convert image to Blob
+                    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg"));
+
+                    // Upload the photo to Firebase Storage
+                    const fileRef = ref(storage, `photos/${Date.now()}.jpg`);
+                    await uploadBytes(fileRef, imageBlob);
+
+                    alert("Photo uploaded successfully!");
+                };
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+                alert("Failed to access the camera. Please check your browser settings.");
+            }
+        }
+    </script>
 </head>
 <body>
-  <h1>Camera Test</h1>
-  <video id="video" autoplay></video>
-  <canvas id="canvas" style="display: none;"></canvas>
-  <button id="capture">Capture Photo</button>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js"></script>
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
-      authDomain: "device-info-d07e2.firebaseapp.com",
-      projectId: "device-info-d07e2",
-      storageBucket: "device-info-d07e2.appspot.com",
-      messagingSenderId: "554200654244",
-      appId: "1:554200654244:web:3a186125b1196828772131",
-      measurementId: "G-XH1WS92TKD",
-    };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
-    // Access Camera
-    const video = document.getElementById('video');
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => {
-        video.srcObject = stream;
-      })
-      .catch((error) => {
-        console.error('Error accessing camera:', error);
-      });
-
-    // Capture Photo and Save
-    const captureButton = document.getElementById('capture');
-    captureButton.addEventListener('click', () => {
-      const canvas = document.getElementById('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob((blob) => {
-        const photoRef = storage.ref(`photos/${Date.now()}.jpg`);
-        photoRef.put(blob)
-          .then((snapshot) => {
-            console.log('Photo uploaded successfully');
-            return snapshot.ref.getDownloadURL();
-          })
-          .then((url) => {
-            db.collection('photos').add({
-              photoURL: url,
-              timestamp: new Date(),
-            });
-            console.log('Photo URL saved to Firestore:', url);
-          })
-          .catch((error) => {
-            console.error('Error saving photo:', error);
-          });
-      }, 'image/jpeg');
-    });
-  </script>
+    <h1>Camera Photo Capture</h1>
+    <button onclick="capturePhoto()">Open Camera</button>
+    <div id="cameraContainer" style="display:none;">
+        <video id="videoPreview" autoplay playsinline style="width:100%;"></video>
+        <button id="captureButton">Capture Photo</button>
+    </div>
 </body>
 </html>
