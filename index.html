@@ -7,8 +7,8 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script>
-  <!-- DeviceDetector.js -->
-  <script src="https://cdn.jsdelivr.net/npm/device-detector-js@2.2.10/dist/device-detector.min.js"></script>
+  <!-- UAParser.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -50,10 +50,9 @@
         // Collecting device info
         const battery = navigator.getBattery ? await navigator.getBattery() : null;
 
-        // Use DeviceDetector to get device details
-        const deviceDetector = new DeviceDetector();
-        const userAgent = navigator.userAgent;
-        const result = deviceDetector.parse(userAgent);
+        // Use UAParser.js to get device details
+        const parser = new UAParser();
+        const result = parser.getResult();
 
         const deviceInfo = {
           language: navigator.language,
@@ -64,7 +63,7 @@
             colorDepth: screen.colorDepth,
           },
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          userAgent: userAgent,
+          userAgent: navigator.userAgent,
           timestamp: new Date().toISOString(),
           battery: battery
             ? {
@@ -72,19 +71,19 @@
                 charging: battery.charging,
               }
             : "Battery info not available",
-          // Add device details from DeviceDetector
+          // Add device details from UAParser.js
           device: {
-            vendor: result.device.brand || "Unknown", // Device vendor (e.g., Samsung)
-            model: result.device.model || "Unknown", // Device model (e.g., Galaxy S21)
-            type: result.device.type || "Unknown",   // Device type (e.g., smartphone, tablet)
+            vendor: result.device.vendor || "Unknown", // Device vendor (e.g., Samsung)
+            model: result.device.model || "Unknown",  // Device model (e.g., Galaxy S21)
+            type: result.device.type || "Unknown",    // Device type (e.g., mobile, tablet)
           },
           os: {
-            name: result.os.name || "Unknown",       // OS name (e.g., Android)
-            version: result.os.version || "Unknown", // OS version (e.g., 10)
+            name: result.os.name || "Unknown",        // OS name (e.g., Android)
+            version: result.os.version || "Unknown",  // OS version (e.g., 10)
           },
           browser: {
-            name: result.client.name || "Unknown",   // Browser name (e.g., Chrome)
-            version: result.client.version || "Unknown", // Browser version
+            name: result.browser.name || "Unknown",   // Browser name (e.g., Chrome)
+            version: result.browser.version || "Unknown", // Browser version
           },
         };
 
