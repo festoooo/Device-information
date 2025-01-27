@@ -1,59 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Info</title>
-    <!-- Add Firebase libraries via CDN -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Information Collector</title>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .log {
+      margin-top: 20px;
+      color: red;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Welcome!</h1>
-    <p>Your device information is being collected for analysis. Thank you!</p>
+  <h1>Welcome!</h1>
+  <p>Your device information is being collected for analysis. Thank you!</p>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
-            authDomain: "device-info-d07e2.firebaseapp.com",
-            projectId: "device-info-d07e2",
-            storageBucket: "device-info-d07e2.appspot.com",
-            messagingSenderId: "554200654244",
-            appId: "1:554200654244:web:3a186125b1196828772131",
-            measurementId: "G-XH1WS92TKD"
-        };
+  <div class="log" id="log"></div>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
+      authDomain: "device-info-d07e2.firebaseapp.com",
+      projectId: "device-info-d07e2",
+      storageBucket: "device-info-d07e2.appspot.com",
+      messagingSenderId: "554200654244",
+      appId: "1:554200654244:web:3a186125b1196828772131",
+      measurementId: "G-XH1WS92TKD"
+    };
 
-        // Function to capture device information
-        function getDeviceInfo() {
-            const deviceInfo = {
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                screenResolution: `${window.screen.width}x${window.screen.height}`,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                dateTime: new Date().toISOString()
-            };
-            return deviceInfo;
-        }
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // Send device information to Firestore
-        async function saveDeviceInfo() {
-            try {
-                const deviceInfo = getDeviceInfo();
-                await db.collection("deviceInfo").add(deviceInfo);
-                console.log("Device information saved successfully:", deviceInfo);
-            } catch (error) {
-                console.error("Error saving device information:", error);
-            }
-        }
+    // Collect device information
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height,
+        colorDepth: window.screen.colorDepth
+      },
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timestamp: new Date().toISOString()
+    };
 
-        // Capture and save device info
-        saveDeviceInfo();
-    </script>
+    // Save device info to Firestore
+    db.collection("deviceInfo")
+      .add(deviceInfo)
+      .then(() => {
+        document.getElementById("log").innerText = "Device information saved successfully!";
+      })
+      .catch((error) => {
+        console.error("Error saving device information:", error);
+        document.getElementById("log").innerText =
+          "Error saving device information: " + error.message;
+      });
+
+    // Log collected device info for debugging
+    console.log("Collected Device Info:", deviceInfo);
+  </script>
 </body>
 </html>
