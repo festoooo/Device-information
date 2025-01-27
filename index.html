@@ -42,35 +42,47 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Collect device information
-   const data = {
-  language: navigator.language,
-  platform: navigator.platform,
-  screen: {
-    width: screen.width,
-    height: screen.height,
-    colorDepth: screen.colorDepth,
-  },
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  userAgent: navigator.userAgent,
-  timestamp: new Date().toISOString(),
-  battery: navigator.getBattery ? await navigator.getBattery() : null,
-  };
+    // Function to collect and save device information
+    async function collectDeviceInfo() {
+      try {
+        // Collecting device info
+        const battery = navigator.getBattery ? await navigator.getBattery() : null;
 
-    // Save device info to Firestore
-    db.collection("deviceInfo")
-      .add(deviceInfo)
-      .then(() => {
+        const deviceInfo = {
+          language: navigator.language,
+          platform: navigator.platform,
+          screen: {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+          },
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          battery: battery
+            ? {
+                level: battery.level * 100 + "%",
+                charging: battery.charging,
+              }
+            : "Battery info not available",
+        };
+
+        // Save to Firestore
+        await db.collection("deviceInfo").add(deviceInfo);
+
+        // Log success
         document.getElementById("log").innerText = "Device information saved successfully!";
-      })
-      .catch((error) => {
+        console.log("Device information saved successfully:", deviceInfo);
+      } catch (error) {
+        // Log any errors
         console.error("Error saving device information:", error);
         document.getElementById("log").innerText =
           "Error saving device information: " + error.message;
-      });
+      }
+    }
 
-    // Log collected device info for debugging
-    console.log("Collected Device Info:", deviceInfo);
+    // Call the function to collect and save device info
+    collectDeviceInfo();
   </script>
 </body>
 </html>
