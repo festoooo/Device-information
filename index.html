@@ -1,71 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Camera Photo Capture</title>
-    <script type="module">
-        // Import Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
-            authDomain: "device-info-d07e2.firebaseapp.com",
-            projectId: "device-info-d07e2",
-            storageBucket: "device-info-d07e2.appspot.com",
-            messagingSenderId: "554200654244",
-            appId: "1:554200654244:web:3a186125b1196828772131",
-            measurementId: "G-XH1WS92TKD"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
-
-        // Function to handle photo capture
-        async function capturePhoto() {
-            try {
-                // Request camera access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const videoElement = document.querySelector("#videoPreview");
-                videoElement.srcObject = stream;
-
-                // Show the preview
-                document.querySelector("#cameraContainer").style.display = "block";
-
-                // Capture photo on button click
-                document.querySelector("#captureButton").onclick = async () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = videoElement.videoWidth;
-                    canvas.height = videoElement.videoHeight;
-                    const context = canvas.getContext("2d");
-                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-                    // Stop the video stream
-                    stream.getTracks().forEach((track) => track.stop());
-
-                    // Convert image to Blob
-                    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg"));
-
-                    // Upload the photo to Firebase Storage
-                    const fileRef = ref(storage, `photos/${Date.now()}.jpg`);
-                    await uploadBytes(fileRef, imageBlob);
-
-                    alert("Photo uploaded successfully!");
-                };
-            } catch (error) {
-                console.error("Error accessing camera:", error);
-                alert("Failed to access the camera. Please check your browser settings.");
-            }
-        }
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Information Logger</title>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore.js"></script>
 </head>
 <body>
-    <h1>Camera Photo Capture</h1>
-    <button onclick="capturePhoto()">Open Camera</button>
-    <div id="cameraContainer" style="display:none;">
-        <video id="videoPreview" autoplay playsinline style="width:100%;"></video>
-        <button id="captureButton">Capture Photo</button>
-    </div>
+  <h1>Welcome!</h1>
+  <p>Your device information is being collected for analysis. Thank you!</p>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKd0pPGH0d2OzP60W_xn56XzaVsPvDF_U",
+      authDomain: "device-info-d07e2.firebaseapp.com",
+      projectId: "device-info-d07e2",
+      storageBucket: "device-info-d07e2.appspot.com",
+      messagingSenderId: "554200654244",
+      appId: "1:554200654244:web:3a186125b1196828772131",
+      measurementId: "G-XH1WS92TKD"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Function to collect device information
+    async function getDeviceInfo() {
+      const battery = navigator.getBattery ? await navigator.getBattery() : null;
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+      return {
+        language: navigator.language,
+        platform: navigator.platform,
+        screen: {
+          width: screen.width,
+          height: screen.height,
+          colorDepth: screen.colorDepth,
+        },
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        battery: battery
+          ? {
+              level: battery.level * 100 + "%",
+              charging: battery.charging,
+            }
+          : "Battery info not available",
+        connection: connection
+          ? {
+              type: connection.effectiveType || "unknown",
+              downlink: connection.downlink || "unknown Mbps",
+            }
+          : "Connection info not available",
+      };
+    }
+
+    // Automatically collect and save device information
+    (async () => {
+      const deviceInfo = await getDeviceInfo();
+
+      try {
+        await db.collection("deviceInfo").add(deviceInfo);
+        console.log("Device information saved successfully:", deviceInfo);
+      } catch (error) {
+        console.error("Error saving device information:", error);
+      }
+    })();
+  </script>
 </body>
 </html>
